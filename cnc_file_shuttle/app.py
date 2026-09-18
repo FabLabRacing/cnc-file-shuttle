@@ -444,6 +444,38 @@ class CNCFileShuttleApp(tk.Tk):
                 current_parts.pop()
                 refresh()
 
+        def create_folder() -> None:
+            name = simpledialog.askstring(
+                "New Folder",
+                "Name for the new folder:",
+                parent=dialog,
+            )
+            if name is None:
+                return
+            name = name.strip()
+            if not name:
+                messagebox.showwarning("Folder name required", "Enter a name for the new folder.", parent=dialog)
+                return
+            if name in {".", ".."} or "/" in name or "\\" in name:
+                messagebox.showwarning(
+                    "Invalid folder name",
+                    "Enter one folder name without '/' or '\\'.",
+                    parent=dialog,
+                )
+                return
+            validation_error = validate_subfolder(name)
+            if validation_error:
+                messagebox.showwarning("Invalid folder name", validation_error, parent=dialog)
+                return
+            relative = "/".join((*current_parts, name))
+            try:
+                backend.create_directory(relative)
+            except BackendError as exc:
+                messagebox.showerror("Could not create folder", str(exc), parent=dialog)
+                return
+            current_parts.append(name)
+            refresh()
+
         def choose() -> None:
             selected_value["value"] = "/".join(current_parts)
             dialog.destroy()
@@ -454,6 +486,7 @@ class CNCFileShuttleApp(tk.Tk):
         buttons.pack(fill="x", padx=12, pady=12)
         ttk.Button(buttons, text="Up", command=go_up).pack(side="left", padx=4)
         ttk.Button(buttons, text="Open", command=open_selected).pack(side="left", padx=4)
+        ttk.Button(buttons, text="New Folder...", command=create_folder).pack(side="left", padx=4)
         ttk.Button(buttons, text="Cancel", command=dialog.destroy).pack(side="right", padx=4)
         ttk.Button(buttons, text="Select This Folder", command=choose, style="Accent.TButton").pack(
             side="right", padx=4

@@ -347,6 +347,15 @@ class SftpBackend(TransferBackend):
             key=str.casefold,
         ))
 
+    def create_directory(self, subfolder: str) -> None:
+        if not safe_subfolder_parts(subfolder):
+            raise BackendError("A folder name is required.")
+        folder = self.folder_for(subfolder)
+        try:
+            self._require_sftp().mkdir(str(folder))
+        except OSError as exc:
+            raise BackendError(f"Could not create remote folder {folder}: {exc}") from exc
+
     def _require_sftp(self):
         if self.sftp is None:
             raise BackendError("The SFTP connection is not open.")

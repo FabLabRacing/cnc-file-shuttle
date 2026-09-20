@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased
+
+- Keep the remote browser's selected destination aligned with its visible folder
+  when opening, going up, or listing a newly created folder fails.
+- Handle Linux/X11 and macOS mouse wheels, preserve small wheel deltas, and leave
+  nested lists, text boxes, and dialogs in control of their own scrolling.
+- Remove unused `program_waiting` state handling; interpreter waiting continues
+  to report as running and retains active-program protection.
+- Refresh installation/release links and document the availability, exact-path,
+  and timing limits of active-program overwrite protection.
+
+## 1.0.1 — 2026-09-18
+
+- Added **New Folder...** to the LinuxCNC SFTP destination browser, including
+  name validation, remote creation, automatic navigation, and error reporting.
+
+## 1.0.0 — 2026-09-07
+
+- First production release, with a packaged Windows x64 build and source support
+  for Windows, macOS, and Linux.
+- Includes local/SFTP transfers, machine profiles, queue reuse, destination
+  browsing, overwrite policies, SSH-key setup, read-only LinuxCNC status, and
+  active-program checks for SFTP overwrites.
+
 ## 0.6.0-dev6
 
 - SFTP profiles now start read-only machine-status monitoring automatically

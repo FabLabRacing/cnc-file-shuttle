@@ -8,8 +8,9 @@ Python 3.10 or newer.
 
 The packaged release does not require Python.
 
-1. Download `CNC-File-Shuttle-v1.0.0-Windows-x64.zip` from the latest GitHub
-   release.
+1. Download the `CNC-File-Shuttle-<version>-Windows-x64.zip` asset from
+   [the latest GitHub release](https://github.com/FabLabRacing/cnc-file-shuttle/releases/latest).
+   Choose the Windows ZIP, rather than GitHub's automatically generated source archives.
 2. Right-click the downloaded ZIP file and select **Extract All...**.
 3. Keep the entire extracted `CNC File Shuttle` folder together. The supporting
    files beside the executable are required.
@@ -189,6 +190,15 @@ The LinuxCNC status helper is installed automatically under the remote user's:
 It reads `linuxcnc.stat()` only. It cannot start programs, jog or home axes,
 reset E-stop, change machine power, or issue MDI commands.
 
+Active-program overwrite protection requires a successful status check over SFTP;
+it does not apply to local-folder copies. Transfers remain enabled if status is
+unavailable. See [the README's machine-status section](README.md#machine-status)
+for the exact-path and timing limits.
+
+Use Destination **Browse...** to choose a folder under the profile root. In the
+SFTP browser, **New Folder...** creates and opens a folder beneath the currently
+displayed destination.
+
 ## Updating
 
 ### Packaged Windows build
@@ -261,4 +271,3 @@ Review the Machine Status panel and Activity Log for the specific error.
 - [Python on Windows](https://docs.python.org/3/using/windows.html)
 - [Python on macOS](https://docs.python.org/3/using/mac.html)
 - [OpenSSH manual pages](https://www.openssh.com/manual.html)
-

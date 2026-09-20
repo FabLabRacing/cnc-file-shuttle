@@ -34,6 +34,19 @@
 5. For an SFTP profile, press Destination **Browse...**, navigate with Open,
    double-click, and Up, then choose **Select This Folder**.
 6. Confirm the SFTP browser cannot navigate above the configured remote root.
+7. Open an unreadable or deleted remote folder. Dismiss the error and confirm
+   the displayed path, listing, and **Select This Folder** destination remain
+   at the last successfully opened folder. Repeat for a failed **Up** action.
+8. Use **New Folder...** and confirm it creates and opens the folder. Check a
+   duplicate name, invalid name, and permission-denied creation. If creation
+   succeeds but listing fails, confirm selection stays at the previous folder.
+
+## Mouse-wheel behavior
+
+On Windows, macOS, and Linux/X11, check that the wheel scrolls the main page
+over labels and empty panel space. Include small trackpad/wheel movements on
+macOS and Windows. Over the queue, Activity Log, comboboxes, and remote-folder
+dialog, confirm only the relevant control scrolls and the main page stays put.
 
 ## LinuxCNC SFTP preparation
 
@@ -92,6 +105,14 @@ ssh username@linuxcnc-ip
 9. Queue a file that would overwrite the active program path and confirm CNC
    File Shuttle blocks that item.
 10. Press **Disconnect** and confirm monitoring stops without affecting LinuxCNC.
+11. Check interpreter waiting and paused states: both must still block an SFTP
+    overwrite of the exact active path, while an unrelated destination remains
+    allowed when status is available.
+
+The overwrite check is a snapshot, not a file lock. Helper or query failures
+leave transfers enabled, and local-folder copies have no active-program check.
+See [the README](../README.md#machine-status) for the full limits. Exercise failure
+paths only with disposable files and a simulator or idle controller.
 
 ## Host-key protection
 

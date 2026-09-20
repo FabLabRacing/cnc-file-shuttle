@@ -134,7 +134,37 @@ class CNCFileShuttleApp(tk.Tk):
         scrollbar.pack(side="right", fill="y")
         self.content.bind("<Configure>", lambda _e: canvas.configure(scrollregion=canvas.bbox("all")))
         canvas.bind("<Configure>", lambda e: canvas.itemconfigure(window_id, width=e.width))
-        canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-e.delta / 120), "units"))
+        windowing_system = self.tk.call("tk", "windowingsystem")
+        wheel_remainder = 0.0
+
+        def scroll_main(event):
+            nonlocal wheel_remainder
+            # Let lists, text boxes, and other windows handle their own wheels.
+            widget = event.widget
+            if widget.winfo_toplevel() != self:
+                return
+            while widget != self:
+                if widget.winfo_class() in {"Listbox", "Text", "Treeview", "TCombobox", "Scrollbar", "TScrollbar"}:
+                    return
+                widget = widget.master
+            if event.num in (4, 5):
+                units = -1 if event.num == 4 else 1
+            else:
+                delta = -event.delta if windowing_system == "aqua" else -event.delta / 120
+                # Accumulate high-resolution wheel deltas instead of dropping them.
+                if delta * wheel_remainder < 0:
+                    wheel_remainder = 0.0
+                wheel_remainder += delta
+                units = int(wheel_remainder)
+                wheel_remainder -= units
+            if units:
+                canvas.yview_scroll(units, "units")
+            return "break"
+
+        self.bind("<MouseWheel>", scroll_main, add="+")
+        if windowing_system == "x11":
+            self.bind("<Button-4>", scroll_main, add="+")
+            self.bind("<Button-5>", scroll_main, add="+")
 
         body = tk.Frame(self.content, bg=BG, padx=18, pady=16)
         body.pack(fill="both", expand=True)
@@ -418,31 +448,31 @@ class CNCFileShuttleApp(tk.Tk):
         folder_list.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        def refresh(entries: tuple[str, ...] | None = None) -> None:
-            nonlocal directories
-            relative = "/".join(current_parts)
+        def refresh(parts: list[str], entries: tuple[str, ...] | None = None) -> None:
+            nonlocal current_parts
+            relative = "/".join(parts)
             if entries is None:
                 try:
-                    directories = backend.list_directories(relative)
+                    entries = backend.list_directories(relative)
                 except BackendError as exc:
                     messagebox.showerror("Could not open folder", str(exc), parent=dialog)
                     return
+            # Keep the selected destination and visible listing together on errors.
+            current_parts = list(parts)
             path_text.set(str(backend.folder_for(relative)))
             folder_list.delete(0, "end")
-            for name in directories:
+            for name in entries:
                 folder_list.insert("end", name)
 
         def open_selected(_event=None) -> None:
             selection = folder_list.curselection()
             if not selection:
                 return
-            current_parts.append(folder_list.get(selection[0]))
-            refresh()
+            refresh([*current_parts, folder_list.get(selection[0])])
 
         def go_up() -> None:
             if current_parts:
-                current_parts.pop()
-                refresh()
+                refresh(current_parts[:-1])
 
         def create_folder() -> None:
             name = simpledialog.askstring(
@@ -473,8 +503,7 @@ class CNCFileShuttleApp(tk.Tk):
             except BackendError as exc:
                 messagebox.showerror("Could not create folder", str(exc), parent=dialog)
                 return
-            current_parts.append(name)
-            refresh()
+            refresh([*current_parts, name])
 
         def choose() -> None:
             selected_value["value"] = "/".join(current_parts)
@@ -492,7 +521,7 @@ class CNCFileShuttleApp(tk.Tk):
             side="right", padx=4
         )
         dialog.protocol("WM_DELETE_WINDOW", dialog.destroy)
-        refresh(directories)
+        refresh(current_parts, directories)
         folder_list.focus_set()
         self.wait_window(dialog)
         return selected_value["value"]
@@ -638,7 +667,6 @@ class CNCFileShuttleApp(tk.Tk):
             "error": BAD,
             "machine_off": WARN,
             "program_paused": WARN,
-            "program_waiting": WARN,
             "program_running": ACCENT,
             "ready": GOOD,
         }.get(status.state, MUTED)

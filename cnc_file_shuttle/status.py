@@ -7,7 +7,7 @@ from pathlib import PurePosixPath
 from typing import Any
 
 
-ACTIVE_PROGRAM_STATES = {"program_running", "program_paused", "program_waiting"}
+ACTIVE_PROGRAM_STATES = {"program_running", "program_paused"}
 
 
 @dataclass(slots=True)
@@ -46,7 +46,6 @@ class LinuxCncStatus:
             "ready": "LinuxCNC — Ready",
             "program_running": "Program Running",
             "program_paused": "Program Paused",
-            "program_waiting": "Program Waiting",
             "error": "LinuxCNC — Error",
             "busy": "LinuxCNC — Busy",
         }.get(self.state, "LinuxCNC Running")
@@ -71,4 +70,3 @@ class LinuxCncStatus:
 
 def status_helper_source() -> bytes:
     return resources.files("cnc_file_shuttle.remote").joinpath("linuxcnc_status_helper.py").read_bytes()
-

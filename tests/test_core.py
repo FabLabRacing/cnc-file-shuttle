@@ -181,14 +181,25 @@ class CoreTests(unittest.TestCase):
             RCS_ERROR=21,
             stat=FakeStat,
         )
-        output = io.StringIO()
-        with mock.patch.dict(sys.modules, {"linuxcnc": fake_linuxcnc}):
-            with contextlib.redirect_stdout(output):
-                linuxcnc_status_helper.main()
-        payload = json.loads(output.getvalue())
-        self.assertEqual(payload["state"], "program_running")
-        self.assertEqual(payload["filename"], "Test.ngc")
-        self.assertEqual(payload["current_line"], 17)
+        for interpreter, expected_state in (
+            (fake_linuxcnc.INTERP_READING, "program_running"),
+            (fake_linuxcnc.INTERP_WAITING, "program_running"),
+            (fake_linuxcnc.INTERP_PAUSED, "program_paused"),
+            (fake_linuxcnc.INTERP_IDLE, "ready"),
+        ):
+            with self.subTest(interpreter=interpreter):
+                FakeStat.interp_state = interpreter
+                output = io.StringIO()
+                with mock.patch.dict(sys.modules, {"linuxcnc": fake_linuxcnc}):
+                    with contextlib.redirect_stdout(output):
+                        linuxcnc_status_helper.main()
+                payload = json.loads(output.getvalue())
+                self.assertEqual(payload["state"], expected_state)
+                self.assertEqual(payload["filename"], "Test.ngc")
+                self.assertEqual(payload["current_line"], 17)
+                status = LinuxCncStatus.from_payload(payload)
+                self.assertEqual(status.is_active_path(FakeStat.file), expected_state != "ready")
+                self.assertFalse(status.is_active_path("/home/cnc/linuxcnc/nc_files/Other.ngc"))
 
 
 if __name__ == "__main__":

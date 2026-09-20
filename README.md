@@ -2,9 +2,12 @@
 
 A simple cross-platform CNC file sender for moving G-code to shop machines.
 
-This development build provides the queue-based Tkinter interface, machine
+The application provides the queue-based Tkinter interface, machine
 profiles, target preview, filename validation, local or mounted-folder copying,
 and direct SFTP transfers to a LinuxCNC computer.
+
+Download the packaged Windows build from [the latest release](https://github.com/FabLabRacing/cnc-file-shuttle/releases/latest).
+See [INSTALL.md](INSTALL.md) for Windows installation and macOS/Linux source setup.
 
 ## Run from source
 
@@ -92,8 +95,20 @@ CNC File Shuttle installs a small helper under the remote user's
 start a cycle, jog, home, change machine power, reset E-stop, or issue MDI.
 
 Status monitoring does not impose a blanket transfer lockout while machining.
-Unrelated files may still be sent, but the app blocks overwriting the exact
-program path that LinuxCNC reports as active.
+Unrelated files may still be sent. Before an SFTP overwrite, a successful status
+check blocks the exact program path reported as running or paused. Interpreter
+waiting is treated as running.
+
+This protection depends on the status helper being available and returning usable
+status. If the helper cannot be loaded or installed, or a status query fails,
+transfers remain enabled; errors are recorded in the Activity Log. A query failure
+disables further active-program checks for that queue. An unavailable status
+response also cannot identify an active file. Local-folder copies do not perform
+this check.
+
+The check compares normalized path strings, not symlink aliases, and describes
+the state at check time. It is not a lock: the active program can change after
+the check, including while an overwrite prompt is open.
 
 ## Existing-file behavior
 
@@ -105,9 +120,9 @@ Each machine profile stores an **If file exists** setting:
 - **Skip existing** leaves existing destination files unchanged without
   prompting.
 
-The active-program safeguard takes priority over all three settings. CNC File
-Shuttle will not overwrite the exact program LinuxCNC reports as active, even
-when the profile is set to **Always overwrite**.
+When the status check identifies the destination as the active program, its
+overwrite block takes priority over all three settings, including **Always
+overwrite**. The availability and timing limits above still apply.
 
 ## Reusing a queue and browsing destinations
 
@@ -120,3 +135,6 @@ The Destination **Browse...** button opens the normal folder picker for local
 profiles. For SFTP profiles it connects to the LinuxCNC computer and presents a
 small remote-folder browser. Both browsers stay beneath the root folder saved in
 the profile; selecting the root itself leaves Target subfolder blank.
+In the SFTP browser, **New Folder...** creates a single folder beneath the current
+folder and opens it for selection. If opening or listing a folder fails, the
+browser keeps the last successfully displayed destination selected.
